@@ -2,40 +2,63 @@
 #include <SFML/Graphics.hpp>
 #include <vector>
 #include <cmath>
+#include <cstdlib>
+#include <ctime>
 #include "Segment.h"
 
-
-int getSelectedSegment(const std::vector<Segment>& segments, float rotation)
+// Segment ID based on position of the pointer
+int getSelectedSegment(const std::vector<Segment>& segments,
+                       sf::Vector2f center,
+                       sf::Vector2f pointerTip,
+                       float rotation)
 {
     if (segments.empty())
         return -1;
 
-    // Normalize rotation to [0, 360)
-    float adjustedAngle = std::fmod(-rotation, 360.f);
-    if (adjustedAngle < 0)
-        adjustedAngle += 360.f;
+    // Pointer angle in world space
+    float dx = pointerTip.x - center.x;
+    float dy = pointerTip.y - center.y;
 
-    // Calculate total weight
+    float pointerAngle = std::atan2(dy, dx) * 180.f / 3.14159265f;
+
+    if (pointerAngle < 0)
+        pointerAngle += 360.f;
+
+    // Total weight
     float totalWeight = 0.f;
     for (const auto& s : segments)
         totalWeight += s.weight;
 
-    float currentAngle = 0.f;
+    // Walk segments
+    float currentAngle = rotation; // match draw start
 
     for (int i = 0; i < segments.size(); ++i)
     {
         float segmentAngle = (segments[i].weight / totalWeight) * 360.f;
 
-        if (adjustedAngle >= currentAngle &&
-            adjustedAngle < currentAngle + segmentAngle)
+        float start = std::fmod(currentAngle, 360.f);
+        if (start < 0) start += 360.f;
+
+        float end = std::fmod(currentAngle + segmentAngle, 360.f);
+        if (end < 0) end += 360.f;
+
+        // Handle wrap-around
+        if (start < end)
         {
-            return i;
+            if (pointerAngle >= start && pointerAngle < end)
+                return i;
+        }
+        else
+        {
+            // wrapped segment
+            if (pointerAngle >= start || pointerAngle < end)
+                return i;
         }
 
         currentAngle += segmentAngle;
     }
 
-    return -1; // fallback (should never hit)
+    return segments.size() - 1; // fallback
 }
 
 void drawWheel(sf::RenderWindow& window,
@@ -87,7 +110,7 @@ void drawWheel(sf::RenderWindow& window,
     }
 }
 
-void drawPointer(sf::RenderWindow& window,
+sf::Vector2f drawPointer(sf::RenderWindow& window,
     float radius,
     sf::Vector2f center)
 {
@@ -115,11 +138,13 @@ void drawPointer(sf::RenderWindow& window,
         pointer[i].color = sf::Color::Black;
 
     window.draw(pointer);
+
+    return tip;
 }
 
 int main()
 {
-	// load font
+    // load font
     sf::Font font;
 
     // debug font loading
@@ -234,18 +259,18 @@ int main()
 
     Wheel wheel;
 
-	// example segments - in a real app, these would be loaded from a file or created by the user
+	// example segments these will eventually be loaded from a file or created by the user
     wheel.name = "Test Wheel";
 
     wheel.segments = {
-        {"A", 1.0f, sf::Color::Red},
-        {"B", 1.0f, sf::Color::Green},
-        {"C", 1.0f, sf::Color::Blue}
+        {"R", 1, sf::Color::Red},
+        {"G", 1, sf::Color::Green},
+        {"B", 1, sf::Color::Blue}
     };
 
-	float rotation = static_cast<float>(std::rand() % 360);                             // random initial Position (0-360 degrees)
-	float angularVelocity = 720.f + static_cast<float>(std::rand() % 180);              // random initial Speed (720-900 degrees per frame)
-	float deceleration = 0.02f + static_cast<float>(std::rand()) / RAND_MAX * 0.02f;    // random deceleration (-0.02-0.04 degrees per frame)
+    float rotation = 0.f;
+    float angularVelocity = 0.f;
+    float deceleration = 0.f;
 	bool spinning = false;                                                              // wheel initially not spinning
 
 	int selected = 1;       // index of the currently selected segment
@@ -263,7 +288,8 @@ int main()
         settings
     );
 
-	sf::Clock clock;                                                                    // create a clock to track time between frames
+	sf::Clock clock;            // create a clock to track time between frames
+	sf::Vector2f pointerTip;    // variable to store the position of the pointer tip for segment selection
 
 	// create menu button
     std::vector<Button> menuOptions;
@@ -354,7 +380,9 @@ int main()
 
 				if (key && key->code == sf::Keyboard::Key::Space && !spinning)      // if space is pressed and wheel is not already spinning, start spinning
                 {
-					rotation = static_cast<float>(std::rand() % 360);                           // random initial Position (0-360 degrees)
+                    // seed random number generator
+                    std::srand(static_cast<unsigned>(std::time(nullptr)));
+                    rotation = static_cast<float>(std::rand() % 2160);                           // random initial Position (0-360 degrees)
 					angularVelocity = 720.f + static_cast<float>(std::rand() % 180);            // random initial Speed (720-900 degrees per second)
                     deceleration = 0.02f + static_cast<float>(std::rand()) / RAND_MAX * 0.02f;  // random deceleration (-0.02-0.04 degrees per frame)
 
@@ -376,34 +404,20 @@ int main()
 
         }
 
-        if (spinning)
-        {
-            rotation += angularVelocity * dt;
-            angularVelocity -= deceleration * dt;
-
-            // stop condition
-			if (angularVelocity <= 0.99f)                               // if speed is low enough, stop the wheel
-            {
-                angularVelocity = 0;
-                spinning = false;
-
-				selected = getSelectedSegment(wheel.segments, rotation);      // determine which segment is selected
-
-                if (selected != -1)
-                {
-					std::cout << wheel.segments[selected].label << std::endl; // print the label of the selected segment
-                }
-
-            }
-            else
-            {
-				angularVelocity -= deceleration;                        // if wheel is still spinning, apply deceleration
-            }
-        }
-
         window.clear(sf::Color::White);
 
+		// get latest window size and calculate wheel centre and pointer centre for drawing
         sf::Vector2u windowSize = window.getSize();
+
+        sf::Vector2f center = {
+            windowSize.x * 0.5f,
+            windowSize.y * 0.5f
+        };
+        
+        sf::Vector2f pointerPos = {
+            windowSize.x * 0.5f,
+            windowSize.y * 0.05f
+        };
 
 		// draw menu button
         menuButton.draw(window);
@@ -417,24 +431,45 @@ int main()
 		// draw the wheel
         float radius = std::min(windowSize.x, windowSize.y) * 0.3f;
 
-        sf::Vector2f center = {
-            windowSize.x * 0.5f,
-            windowSize.y * 0.5f
-        };
-
-        std::cout << "Segments: " << wheel.segments.size() << std::endl;
 		drawWheel(window, wheel.segments, radius, center, rotation);
 
-		// draw the pointer
-        sf::Vector2f pointerPos = {
-            windowSize.x * 0.5f,
-            windowSize.y * 0.05f
-        };
+        // draw the pointer
+        pointerTip = drawPointer(window, radius, center);
 
-        drawPointer(window, radius, center);
+        if (spinning)
+        {
+            // Apply rotation
+            rotation += angularVelocity * dt;
 
-		// update selected segment index
-        selected = getSelectedSegment(wheel.segments, rotation);
+            // Linear deceleration
+            angularVelocity -= deceleration * dt;
+
+            // Stop condition
+            if (angularVelocity <= 0.99f)
+            {
+                spinning = false;
+                angularVelocity = 0.f;
+
+                int selected = getSelectedSegment(
+                    wheel.segments,
+                    center,
+                    pointerTip,
+                    rotation
+                );
+
+                if (selected >= 0 && selected < wheel.segments.size())
+                {
+                    std::cout << "Selected: "
+                        << wheel.segments[selected].label
+                        << std::endl;
+                }
+
+            }
+            else
+            {
+                angularVelocity -= deceleration;
+            }
+        }
 
         window.display();
 
