@@ -1,8 +1,10 @@
 #pragma once
+
 #include <string>
 #include <SFML/Graphics.hpp>
 
-struct Segment {
+struct Segment
+{
     std::string label;
     float weight;
     sf::Color color;
