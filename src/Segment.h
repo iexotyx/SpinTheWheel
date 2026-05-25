@@ -7,5 +7,5 @@ struct Segment
 {
     std::string label;
     float weight;
-    sf::Color color;
+    sf::Color colour;
 };

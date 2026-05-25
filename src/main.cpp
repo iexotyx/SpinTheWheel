@@ -1,11 +1,11 @@
-﻿#include <iostream>
-#include <SFML/Graphics.hpp>
+﻿#include <SFML/Graphics.hpp>
 #include <vector>
 #include <cmath>
 #include <cstdlib>
 #include <ctime>
 #include <sstream>
 #include <iomanip>
+#include <windows.h>
 #include "Segment.h"
 
 // menu button types
@@ -29,7 +29,7 @@ struct TableLayout
     float startX;
     float startY;
     float colLabel;
-    float colColor;
+    float colcolour;
     float colWeight;
     float rowHeight;
 };
@@ -42,7 +42,7 @@ TableLayout getTableLayout(const sf::RenderWindow& window)
     layout.startX = size.x * 0.1f;
     layout.startY = size.y * 0.15f;
     layout.colLabel = size.x * 0.3f;
-    layout.colColor = size.x * 0.2f;
+    layout.colcolour = size.x * 0.2f;
     layout.colWeight = size.x * 0.2f;
     layout.rowHeight = 40.f;
 
@@ -64,9 +64,9 @@ struct ColourPickerLayout
     float height;
 };
 
-ColourPickerLayout getColourPickerLayout(sf::RenderWindow& window, int rowCount)
+ColourPickerLayout getColourPickerLayout(sf::RenderWindow& window, int rowCount, TableLayout cachedLayout)
 {
-    TableLayout layout = getTableLayout(window);
+    TableLayout layout = cachedLayout;
 
     ColourPickerLayout picker;
 
@@ -103,11 +103,11 @@ sf::Color hsvToRgb(float h, float s, float v)
     );
 }
 
-void rgbToHsv(const sf::Color& color, float& h, float& s, float& v)
+void rgbToHsv(const sf::Color& colour, float& h, float& s, float& v)
 {
-    float r = color.r / 255.f;
-    float g = color.g / 255.f;
-    float b = color.b / 255.f;
+    float r = colour.r / 255.f;
+    float g = colour.g / 255.f;
+    float b = colour.b / 255.f;
 
     float max = std::max({ r, g, b });
     float min = std::min({ r, g, b });
@@ -241,7 +241,7 @@ bool isHueTooClose(float newHue, const std::vector<Segment>& segments, float min
     for (const auto& s : segments)
     {
         float existingHue, sat, val;
-        rgbToHsv(s.color, existingHue, sat, val);
+        rgbToHsv(s.colour, existingHue, sat, val);
 
         float diff = std::abs(newHue - existingHue);
 
@@ -269,6 +269,8 @@ void normalizeWeights(std::vector<Segment>& segments)
         s.weight /= total;
 }
 
+constexpr float PI = 3.14159265f;
+
 // Segment ID based on position of the pointer -----------------------------------------------------------------
 int getSelectedSegment(const std::vector<Segment>& segments,
                        sf::Vector2f center,
@@ -282,7 +284,7 @@ int getSelectedSegment(const std::vector<Segment>& segments,
     float dx = pointerTip.x - center.x;
     float dy = pointerTip.y - center.y;
 
-    float pointerAngle = std::atan2(dy, dx) * 180.f / 3.14159265f;
+    float pointerAngle = std::atan2(dy, dx) * 180.f / PI;
 
     if (pointerAngle < 0)
         pointerAngle += 360.f;
@@ -352,7 +354,7 @@ void drawWheel(sf::RenderWindow& window,
 
         sf::Vertex centerVertex;
         centerVertex.position = center;
-        centerVertex.color = s.color;
+        centerVertex.color = s.colour;
         slice.append(centerVertex);
 
         int points = 32;
@@ -360,7 +362,7 @@ void drawWheel(sf::RenderWindow& window,
         for (int i = 0; i <= points; ++i)
         {
             float current = segmentStart + angle * (float(i) / points);
-            float rad = current * 3.14159265f / 180.f;
+            float rad = current * PI / 180.f;
 
             sf::Vector2f point = {
                 center.x + std::cos(rad) * radius,
@@ -369,14 +371,14 @@ void drawWheel(sf::RenderWindow& window,
 
             sf::Vertex v;
             v.position = point;
-            v.color = s.color;
+            v.color = s.colour;
             slice.append(v);
         }
 
         window.draw(slice);
 
         // draw labels
-        float rad = midAngle * 3.14159265f / 180.f;
+        float rad = midAngle * PI / 180.f;
 
         float textRadius = radius * 0.5f;        // place text in true visual center of segment
 
@@ -396,7 +398,7 @@ void drawWheel(sf::RenderWindow& window,
         sf::FloatRect bounds = text.getLocalBounds();
 
         // available width along arc
-        float arcLength = (angle * 3.14159265f / 180.f) * textRadius;
+        float arcLength = (angle * PI / 180.f) * textRadius;
         float maxWidth = arcLength * 0.75f;
 
         // Scale down if needed
@@ -422,9 +424,9 @@ void drawWheel(sf::RenderWindow& window,
 
         // Contrast-aware colour
         float brightness =
-            0.299f * s.color.r +
-            0.587f * s.color.g +
-            0.114f * s.color.b;
+            0.299f * s.colour.r +
+            0.587f * s.colour.g +
+            0.114f * s.colour.b;
 
         text.setFillColor(brightness > 128.f ? sf::Color::Black : sf::Color::White);
 
@@ -474,7 +476,7 @@ void drawMenuButton(sf::RenderWindow& window, const Button& button)
     button.draw(window);
 }
 
-// draw meny function ------------------------------------------------------------------------------------------
+// draw menu function ------------------------------------------------------------------------------------------
 void drawMenu(sf::RenderWindow& window,
     const std::vector<Button>& options,
     const sf::Font& font)
@@ -492,22 +494,22 @@ void drawCreateWheelUI(sf::RenderWindow& window,
     EditField activeField,
     const std::string& weightInput,
     bool cursorVisible,
-    bool textSelected)
+    bool textSelected,
+    const TableLayout& layout,
+    const ColourPickerLayout& picker)
 {
-    TableLayout layout = getTableLayout(window);
-
     float startX = layout.startX;
     float startY = layout.startY;
     float colLabel = layout.colLabel;
-    float colColor = layout.colColor;
+    float colcolour = layout.colcolour;
     float colWeight = layout.colWeight;
     float rowHeight = layout.rowHeight;
 
-    float tableWidth = colLabel + colColor + colWeight;
+    float tableWidth = colLabel + colcolour + colWeight;
 
     // title
     sf::Text title(font);
-    title.setString("Create Wheel");
+    title.setString("Edit Wheel");
     title.setCharacterSize(30);
     title.setPosition({ startX, startY - 60.f });
     title.setFillColor(sf::Color::Black);
@@ -528,7 +530,7 @@ void drawCreateWheelUI(sf::RenderWindow& window,
     window.draw(header);
 
     header.setString("Weight");
-    header.setPosition({ startX + colLabel + colColor, startY });
+    header.setPosition({ startX + colLabel + colcolour, startY });
     window.draw(header);
 
     // rows
@@ -632,30 +634,30 @@ void drawCreateWheelUI(sf::RenderWindow& window,
         // colour cell highlight
         if (i == selectedRow && activeField == EditField::Colour)
         {
-            drawCellHighlight(startX + colLabel, colColor);
+            drawCellHighlight(startX + colLabel, colcolour);
         }
 
         // colour box
         float paddingX = 8.f;
         float paddingY = 5.f;
 
-        float boxWidth = colColor - paddingX * 2.f;
+        float boxWidth = colcolour - paddingX * 2.f;
         float boxHeight = rowHeight - paddingY * 2.f;
 
-        sf::RectangleShape colorBox({ boxWidth, boxHeight });
-        colorBox.setFillColor(s.color);
+        sf::RectangleShape colourBox({ boxWidth, boxHeight });
+        colourBox.setFillColor(s.colour);
 
-        colorBox.setPosition({
+        colourBox.setPosition({
             startX + colLabel + paddingX,
             y + paddingY
             });
 
-        window.draw(colorBox);
+        window.draw(colourBox);
 
         // weight cell highlight
         if (i == selectedRow && activeField == EditField::Weight)
         {
-            drawCellHighlight(startX + colLabel + colColor, colWeight);
+            drawCellHighlight(startX + colLabel + colcolour, colWeight);
         }
 
         // weight string logic
@@ -677,7 +679,7 @@ void drawCreateWheelUI(sf::RenderWindow& window,
         weight.setString(weightStr);
         weight.setCharacterSize(18);
         weight.setFillColor(sf::Color::Black);
-        weight.setPosition({ startX + colLabel + colColor, y + 5.f });
+        weight.setPosition({ startX + colLabel + colcolour, y + 5.f });
 
         // draw selection highlight behind text
         if (i == selectedRow && activeField == EditField::Weight && textSelected)
@@ -721,8 +723,6 @@ void drawCreateWheelUI(sf::RenderWindow& window,
     // colour picker
     if (showColourPicker && selectedRow >= 0 && selectedRow < segments.size())
     {
-        ColourPickerLayout picker = getColourPickerLayout(window, segments.size());
-
         float x = picker.x;
         float y = picker.y;
 
@@ -788,7 +788,7 @@ void drawCreateWheelUI(sf::RenderWindow& window,
 
 		// colour preview box
         sf::RectangleShape preview({ 60.f, 60.f });
-        preview.setFillColor(segments[selectedRow].color);
+        preview.setFillColor(segments[selectedRow].colour);
         preview.setPosition({ x + w + 30.f, y + 10.f });
         preview.setOutlineThickness(2.f);
         preview.setOutlineColor(sf::Color::Black);
@@ -839,7 +839,7 @@ int main()
     // debug font loading
     if (!font.openFromFile("C:/Windows/Fonts/arial.ttf"))
     {
-        std::cout << "Failed to load font\n";
+        return 1;
     }
 
     enum class AppState
@@ -879,6 +879,7 @@ int main()
     float rotation = 0.f;
     float angularVelocity = 0.f;
     float deceleration = 0.f;
+
 	bool spinning = false;  // wheel initially not spinning
 
 	int selected = 1;       // index of the currently selected segment
@@ -890,7 +891,7 @@ int main()
 
 	// draw window with anti-aliasing
 	sf::ContextSettings settings;
-    settings.antiAliasingLevel = 16;
+    settings.antiAliasingLevel = 4;
 
     sf::RenderWindow window(
         sf::VideoMode({ 800, 600 }),
@@ -899,6 +900,8 @@ int main()
         sf::State::Windowed,
         settings
     );
+
+    window.setFramerateLimit(60);
 
 	sf::Clock clock;            // create a clock to track time between frames
 	sf::Vector2f pointerTip;    // variable to store the position of the pointer tip for segment selection
@@ -913,6 +916,15 @@ int main()
         sf::Vector2f{ 40.f, 40.f },
         sf::Vector2f{ 10.f, 10.f }
     );
+
+	// cached layouts to avoid recalculating every frame, updated on window resize
+    TableLayout cachedLayout;
+    ColourPickerLayout cachedPicker;
+
+    sf::Vector2u lastWindowSize = window.getSize();
+    size_t lastRowCount = editingSegments.size();
+
+    bool layoutDirty = true;
 
 	// menu option dimensions
     float buttonWidth = 200.f;
@@ -940,13 +952,20 @@ int main()
 	// currently active field in the editor (label, weight, or colour)
     EditField activeField = EditField::None;
 
+    // space to spin tooltip
+    sf::Text tooltip(font);
+    tooltip.setString("[Space] to spin");
+    tooltip.setCharacterSize(18);
+    tooltip.setFillColor(sf::Color(90, 90, 90));
+    tooltip.setString("[Space] to spin");
+    
+	// decimal formatting for display
+    std::ostringstream ss;
+    ss.setf(std::ios::fixed);
+    ss.precision(2);
+
 	// colour picker layout declarations
     ColourPickerLayout picker;
-
-    if (state == AppState::CreateWheel)
-    {
-        picker = getColourPickerLayout(window, static_cast<int>(editingSegments.size()));
-    }
 
     bool draggingHue = false;
     bool draggingSaturation = false;
@@ -969,6 +988,24 @@ int main()
     {
 
 		float dt = clock.restart().asSeconds();     // calculate delta time
+
+		// update cached layouts in case of window resizing
+        sf::Vector2u currentSize = window.getSize();
+
+        if (currentSize != lastWindowSize || editingSegments.size() != lastRowCount)
+        {
+            layoutDirty = true;
+            lastWindowSize = currentSize;
+            lastRowCount = editingSegments.size();
+        }
+
+        if (layoutDirty)
+        {
+            cachedLayout = getTableLayout(window);
+            cachedPicker = getColourPickerLayout(window, static_cast<int>(editingSegments.size()), cachedLayout);
+            layoutDirty = false;
+        }
+
         if (state == AppState::CreateWheel)
         {
             // Update cursor blinking in editor
@@ -1063,8 +1100,8 @@ int main()
                     // handle creator table selection
                     if (state == AppState::CreateWheel)
                     {
-                        TableLayout layout = getTableLayout(window);
-                        ColourPickerLayout picker = getColourPickerLayout(window, editingSegments.size());
+                        const TableLayout& layout = cachedLayout;
+                        const ColourPickerLayout& picker = cachedPicker;
 
                         bool clickedSomething = false;
 
@@ -1081,8 +1118,9 @@ int main()
                             }
                             catch (...) {
                                 std::ostringstream ss;
-                                ss << std::fixed << std::setprecision(2)
-                                    << editingSegments[selectedRow].weight;
+                                ss.str("");
+                                ss.clear();
+                                ss << editingSegments[selectedRow].weight;
                                 weightInput = ss.str();
                             }
                             // leave textSelected as false after commit
@@ -1098,13 +1136,13 @@ int main()
                                 { layout.colLabel, layout.rowHeight }
                             );
 
-                            sf::FloatRect colorRect(
+                            sf::FloatRect colourRect(
                                 { layout.startX + layout.colLabel, y },
-                                { layout.colColor, layout.rowHeight }
+                                { layout.colcolour, layout.rowHeight }
                             );
 
                             sf::FloatRect weightRect(
-                                { layout.startX + layout.colLabel + layout.colColor, y },
+                                { layout.startX + layout.colLabel + layout.colcolour, y },
                                 { layout.colWeight, layout.rowHeight }
                             );
 
@@ -1124,12 +1162,12 @@ int main()
                                 break;
                             }
 
-                            if (colorRect.contains(mousePos))
+                            if (colourRect.contains(mousePos))
                             {
                                 selectedRow = i;
                                 activeField = EditField::Colour;
                                 showColourPicker = true;
-                                rgbToHsv(editingSegments[i].color, hue, saturation, value);
+                                rgbToHsv(editingSegments[i].colour, hue, saturation, value);
 
                                 textSelected = false;
 
@@ -1143,10 +1181,9 @@ int main()
                                 selectedRow = i;
                                 activeField = EditField::Weight;
 
-                                std::ostringstream ss;
-                                ss << std::fixed << std::setprecision(6)
-                                    << editingSegments[i].weight;
-
+                                ss.str("");
+                                ss.clear();
+                                ss << editingSegments[i].weight;
                                 weightInput = ss.str();
 
                                 showColourPicker = false;
@@ -1205,9 +1242,9 @@ int main()
                                         editingSegments[selectedRow].weight = v;
                                 }
                                 catch (...) {
-                                    std::ostringstream ss;
-                                    ss << std::fixed << std::setprecision(2)
-                                        << editingSegments[selectedRow].weight;
+                                    ss.str("");
+                                    ss.clear();
+                                    ss << editingSegments[selectedRow].weight;
                                     weightInput = ss.str();
                                 }
                             }
@@ -1252,9 +1289,9 @@ int main()
                                         editingSegments[selectedRow].weight = v;
                                 }
                                 catch (...) {
-                                    std::ostringstream ss;
-                                    ss << std::fixed << std::setprecision(2)
-                                        << editingSegments[selectedRow].weight;
+                                    ss.str("");
+                                    ss.clear();
+                                    ss << editingSegments[selectedRow].weight;
                                     weightInput = ss.str();
                                 }
 
@@ -1340,10 +1377,9 @@ int main()
                     if (key->code == sf::Keyboard::Key::Escape)
                     {
                         // cancel edit and restore displayed value
-                        std::ostringstream ss;
-                        ss << std::fixed << std::setprecision(2)
-                            << editingSegments[selectedRow].weight;
-
+                        ss.str("");
+                        ss.clear();
+                        ss << editingSegments[selectedRow].weight;
                         weightInput = ss.str();
                         textSelected = false;
                     }
@@ -1365,7 +1401,7 @@ int main()
                         if (!editingSegments.empty())
                         {
                             float lastHue, sat, val;
-                            rgbToHsv(editingSegments.back().color, lastHue, sat, val);
+                            rgbToHsv(editingSegments.back().colour, lastHue, sat, val);
                             baseHue = lastHue;
                         }
 
@@ -1421,7 +1457,7 @@ int main()
             // handle dragging of colour sliders in createwheel state
             if (state == AppState::CreateWheel && showColourPicker)
             {
-                ColourPickerLayout picker = getColourPickerLayout(window, editingSegments.size());
+                const ColourPickerLayout& picker = cachedPicker;
 
                 float x = picker.x;
                 float w = picker.width;
@@ -1446,7 +1482,7 @@ int main()
 
                 if (selectedRow >= 0 && selectedRow < editingSegments.size())
                 {
-                    editingSegments[selectedRow].color = hsvToRgb(hue, saturation, value);
+                    editingSegments[selectedRow].colour = hsvToRgb(hue, saturation, value);
                 }
             }
         }
@@ -1475,6 +1511,10 @@ int main()
             // Linear deceleration
             angularVelocity -= deceleration * dt;
 
+			float effectiveDeceleration = deceleration * 3600.f; // tuned factor to make deceleration consistent across different frame rates
+
+            angularVelocity -= effectiveDeceleration * dt;
+
             // Stop condition
             if (angularVelocity <= 0.99f)
             {
@@ -1490,15 +1530,9 @@ int main()
 
                 if (selected >= 0 && selected < wheel.segments.size())
                 {
-                    std::cout << "Selected: "
-                        << wheel.segments[selected].label
-                        << std::endl;
+					continue; // placeholder for any future action on selected segment
                 }
 
-            }
-            else
-            {
-            angularVelocity -= deceleration;
             }
         }
 
@@ -1512,12 +1546,7 @@ int main()
                 pointerTip = drawPointer(window, radius, center);
                 drawMenuButton(window, menuButton);
                 if (!spinning)
-                {
-                    sf::Text tooltip(font);
-                    tooltip.setString("[Space] to spin");
-                    tooltip.setCharacterSize(18);
-                    tooltip.setFillColor(sf::Color(90, 90, 90));
-
+                {                    
                     tooltip.setPosition({
                         center.x - tooltip.getGlobalBounds().size.x * 0.5f,
                         center.y + radius + 30.f
@@ -1536,16 +1565,10 @@ int main()
                 drawMenu(window, menuOptions, font);
                 if (!spinning)
                 {
-                    sf::Text tooltip(font);
-                    tooltip.setString("[Space] to spin");
-                    tooltip.setCharacterSize(18);
-                    tooltip.setFillColor(sf::Color(90, 90, 90));
-
                     tooltip.setPosition({
                         center.x - tooltip.getGlobalBounds().size.x * 0.5f,
                         center.y + radius + 30.f
-                        });
-
+                    });
                     window.draw(tooltip);
                 }
                 break;
@@ -1562,7 +1585,9 @@ int main()
                     activeField,
                     weightInput,
                     cursorVisible,
-                    textSelected
+                    textSelected,
+                    cachedLayout,
+                    cachedPicker
                 );
                 drawMenuButton(window, menuButton);
                 break;
