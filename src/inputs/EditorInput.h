@@ -1,105 +1,6 @@
 #pragma once
 
-// handle text input function
-TextEditResult handleTextInput(
-    const sf::Event::TextEntered& textEvent,
-    std::string& text,
-    bool& textSelected
-)
-{
-    char entered =
-        static_cast<char>(textEvent.unicode);
-
-    // enter commits
-
-    if (entered == 13 || entered == 10)
-    {
-        textSelected = false;
-        return TextEditResult::Commit;
-    }
-
-    // backspace
-
-    if (entered == 8 || entered == 7)
-    {
-        if (textSelected)
-        {
-            text.clear();
-            textSelected = false;
-        }
-        else if (!text.empty())
-        {
-            text.pop_back();
-        }
-
-        return TextEditResult::None;
-    }
-
-    // printable ascii
-
-    if (entered >= 32 && entered < 127)
-    {
-        if (textSelected)
-        {
-            text.clear();
-            textSelected = false;
-        }
-
-        text += entered;
-    }
-
-    return TextEditResult::None;
-}
-
-// handle numeric text input function, allows digits and one decimal point only
-TextEditResult handleNumericTextInput(
-    const sf::Event::TextEntered& textEvent,
-    std::string& text,
-    bool& textSelected
-)
-{
-    char entered =
-        static_cast<char>(textEvent.unicode);
-
-    if (entered == 13 || entered == 10)
-    {
-        textSelected = false;
-        return TextEditResult::Commit;
-    }
-
-    if (entered == 8)
-    {
-        if (textSelected)
-        {
-            text.clear();
-            textSelected = false;
-        }
-        else if (!text.empty())
-        {
-            text.pop_back();
-        }
-
-        return TextEditResult::None;
-    }
-
-    if ((entered >= '0' && entered <= '9') ||
-        entered == '.')
-    {
-        if (textSelected)
-        {
-            text.clear();
-            textSelected = false;
-        }
-
-        if (entered != '.' ||
-            text.find('.') == std::string::npos)
-        {
-            text += entered;
-        }
-    }
-
-    return TextEditResult::None;
-}
+#include "inputs/GenericInput.h"
 
 // handle mouse click in editor function
 void handleEditorMouseClick(
@@ -327,10 +228,10 @@ void handleEditorMouseClick(
             picker.height;
 
         sf::FloatRect hueRect(
-        {
-            sliderX,
-            sliderY
-        },
+            {
+                sliderX,
+                sliderY
+            },
         {
             picker.width,
             h
@@ -359,21 +260,21 @@ void handleEditorMouseClick(
             h
         });
 
-            if (hueRect.contains(mousePos))
-            {
-                editor.draggingHue = true;
-                clickedSomething = true;
-            }
-            else if (satRect.contains(mousePos))
-            {
-                editor.draggingSaturation = true;
-                clickedSomething = true;
-            }
-            else if (valRect.contains(mousePos))
-            {
-                editor.draggingValue = true;
-                clickedSomething = true;
-            }
+        if (hueRect.contains(mousePos))
+        {
+            editor.draggingHue = true;
+            clickedSomething = true;
+        }
+        else if (satRect.contains(mousePos))
+        {
+            editor.draggingSaturation = true;
+            clickedSomething = true;
+        }
+        else if (valRect.contains(mousePos))
+        {
+            editor.draggingValue = true;
+            clickedSomething = true;
+        }
     }
 
     // clear selection
@@ -470,4 +371,41 @@ void handleEditorScroll(
             ),
         visibleRows
     );
+}
+
+// handle dragging of colour sliders in createwheel state
+void updateColourPickerDrag(
+    const sf::RenderWindow& window,
+    const AppState& state,
+    EditorState& editor,
+    const ColourPickerLayout& picker)
+{
+    if (state == AppState::EditWheel && editor.showColourPicker)
+    {
+        float x = picker.x;
+        float w = picker.width;
+
+        sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
+
+        auto clamp01 = [](float v)
+            {
+                return std::max(0.f, std::min(1.f, v));
+            };
+
+        float t = clamp01((mousePos.x - (x + 10.f)) / w);
+
+        if (editor.draggingHue)
+            editor.hue = t * 360.f;
+
+        if (editor.draggingSaturation)
+            editor.saturation = t;
+
+        if (editor.draggingValue)
+            editor.value = t;
+
+        if (editor.hasSelectedRow())
+        {
+            editor.segments[editor.selectedRow].colour = hsvToRgb(editor.hue, editor.saturation, editor.value);
+        }
+    }
 }

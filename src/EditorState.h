@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Wheel.h"
-
 // edit field types and variables for create/edit wheel UI
 enum class EditField
 {
