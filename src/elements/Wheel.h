@@ -2,6 +2,7 @@
 
 constexpr float PI = 3.14159265f;
 
+// segment struct to hold data for each wheel segment
 struct Segment
 {
     std::string label;
@@ -9,11 +10,14 @@ struct Segment
     sf::Color colour;
 };
 
-// segment struct to hold data for each wheel segment
+// wheel struct to hold the name, segments of the wheel, and wheel size
 struct Wheel
 {
     std::string name;
     std::vector<Segment> segments;
+
+    sf::Vector2f centre;
+    float radius;
 };
 
 // wheel spin state struct to manage the spinning animation and physics of the wheel
@@ -28,7 +32,7 @@ struct WheelSpinState
 
 // Segment ID based on position of the pointer
 int getSelectedSegment(const std::vector<Segment>& segments,
-    const sf::Vector2f& center,
+    const sf::Vector2f& centre,
     const sf::Vector2f& pointerTip,
     float rotation
 )
@@ -37,8 +41,8 @@ int getSelectedSegment(const std::vector<Segment>& segments,
         return -1;
 
     // Pointer angle in world space
-    float dx = pointerTip.x - center.x;
-    float dy = pointerTip.y - center.y;
+    float dx = pointerTip.x - centre.x;
+    float dy = pointerTip.y - centre.y;
 
     float pointerAngle = std::atan2(dy, dx) * 180.f / PI;
 
@@ -80,4 +84,28 @@ int getSelectedSegment(const std::vector<Segment>& segments,
     }
 
     return segments.size() - 1; // fallback
+}
+
+void updateWheelPosition(
+    const sf::Vector2u windowSize,
+    Wheel& wheel,
+    sf::Text& tooltip)
+{
+    wheel.centre = {
+            windowSize.x * 0.5f,
+            windowSize.y * 0.5f
+    };
+
+    // pointer tip is a fixed distance from the centre
+    sf::Vector2f pointerPos = {
+        windowSize.x * 0.5f,
+        windowSize.y * 0.05f
+    };
+
+    wheel.radius = std::min(windowSize.x, windowSize.y) * 0.3f;
+
+    tooltip.setPosition({
+            wheel.centre.x - tooltip.getGlobalBounds().size.x * 0.5f,
+            wheel.centre.y + wheel.radius + 30.f
+        });
 }

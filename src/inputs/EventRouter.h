@@ -119,7 +119,6 @@ void handleEvent(
     sf::Clock& clickClock,
     float doubleClickThreshold,
     sf::Text& tooltip,
-    float radius,
     std::ostringstream& ss)
 {
     if (event.is<sf::Event::Closed>())
@@ -306,21 +305,9 @@ void handleEvent(
         // get latest window size and calculate wheel centre and pointer centre
         sf::Vector2u windowSize = window.getSize();
 
-        sf::Vector2f center = {
-            windowSize.x * 0.5f,
-            windowSize.y * 0.5f
-        };
-
-        // pointer tip is a fixed distance from the center, so we can calculate it once
-        sf::Vector2f pointerPos = {
-            windowSize.x * 0.5f,
-            windowSize.y * 0.05f
-        };
-
-        updateTooltipPosition(
-            tooltip,
-            radius,
-            center
-        );
+        updateWheelPosition(
+			windowSize,
+            app.wheel,
+			tooltip);
     }
 }

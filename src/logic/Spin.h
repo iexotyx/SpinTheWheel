@@ -8,7 +8,6 @@ struct SpinResult
 
 SpinResult updateSpin(
     AppContext& app,
-    const sf::Vector2f& center,
     const sf::Vector2f& pointerTip,
     float dt)
 {
@@ -35,7 +34,7 @@ SpinResult updateSpin(
         result.selectedIndex =
             getSelectedSegment(
                 app.wheel.segments,
-                center,
+                app.wheel.centre,
                 pointerTip,
                 app.spin.rotation
             );

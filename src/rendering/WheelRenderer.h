@@ -2,20 +2,17 @@
 
 // draw wheel function
 void drawWheel(sf::RenderWindow& window,
-    const std::vector<Segment>& segments,
-    float radius,
-    sf::Vector2f center,
-    float rotation,
+	AppContext& app,
     const sf::Font& font
 )
 {
     float totalWeight = 0.f;
-    for (const auto& s : segments)
+    for (const auto& s : app.wheel.segments)
         totalWeight += s.weight;
 
-    float currentAngle = rotation;
+    float currentAngle = app.spin.rotation;
 
-    for (const auto& s : segments)
+    for (const auto& s : app.wheel.segments)
     {
         float angle = (s.weight / totalWeight) * 360.f;
 
@@ -27,7 +24,7 @@ void drawWheel(sf::RenderWindow& window,
         sf::VertexArray slice(sf::PrimitiveType::TriangleFan);
 
         sf::Vertex centerVertex;
-        centerVertex.position = center;
+        centerVertex.position = app.wheel.centre;
         centerVertex.color = s.colour;
         slice.append(centerVertex);
 
@@ -39,8 +36,8 @@ void drawWheel(sf::RenderWindow& window,
             float rad = current * PI / 180.f;
 
             sf::Vector2f point = {
-                center.x + std::cos(rad) * radius,
-                center.y + std::sin(rad) * radius
+                app.wheel.centre.x + std::cos(rad) * app.wheel.radius,
+                app.wheel.centre.y + std::sin(rad) * app.wheel.radius
             };
 
             sf::Vertex v;
@@ -54,18 +51,18 @@ void drawWheel(sf::RenderWindow& window,
         // draw labels
         float rad = midAngle * PI / 180.f;
 
-        float textRadius = radius * 0.5f;        // place text in true visual center of segment
+        float textRadius = app.wheel.radius * 0.5f;        // place text in true visual centre of segment
 
         sf::Vector2f textPos = {
-            center.x + std::cos(rad) * textRadius,
-            center.y + std::sin(rad) * textRadius
+            app.wheel.centre.x + std::cos(rad) * textRadius,
+            app.wheel.centre.y + std::sin(rad) * textRadius
         };
 
         sf::Text text(font);
         text.setString(s.label);
 
         // base size of text relative to wheel size, will be scaled down if it doesn't fit
-        unsigned int charSize = static_cast<unsigned int>(radius * 0.2f);
+        unsigned int charSize = static_cast<unsigned int>(app.wheel.radius * 0.2f);
         text.setCharacterSize(charSize);
 
         // measure text bounds to check if it fits within the segment
@@ -113,18 +110,17 @@ void drawWheel(sf::RenderWindow& window,
 
 // draw pointer function
 sf::Vector2f drawPointer(sf::RenderWindow& window,
-    float radius,
-    const sf::Vector2f& center)
+    Wheel& wheel)
 {
-    float height = radius * 0.12f;
-    float width = radius * 0.08f;
+    float height = wheel.radius * 0.12f;
+    float width = wheel.radius * 0.08f;
 
     // tip offset into the wheel
-    float overlap = radius * 0.05f;
+    float overlap = wheel.radius * 0.05f;
 
     sf::Vector2f tip = {
-        center.x,
-        center.y - radius + overlap
+        wheel.centre.x,
+        wheel.centre.y - wheel.radius + overlap
     };
 
     sf::VertexArray pointer(sf::PrimitiveType::Triangles, 3);
@@ -147,28 +143,17 @@ sf::Vector2f drawPointer(sf::RenderWindow& window,
 // draw wheel name function
 void drawWheelName(const sf::Font& font,
     const Wheel& wheel,
-    sf::RenderWindow& window,
-    const sf::Vector2f& center)
+    sf::RenderWindow& window)
 {
     sf::Text title(font);
     title.setCharacterSize(28);
     title.setFillColor(sf::Color::Black);
     title.setString(wheel.name);
 
-    // center horizontally
+    // centre horizontally
     sf::FloatRect bounds = title.getGlobalBounds();
 
-    title.setPosition({ center.x - bounds.size.x * 0.5f, 20.f });
+    title.setPosition({ wheel.centre.x - bounds.size.x * 0.5f, 20.f });
 
     window.draw(title);
-}
-void updateTooltipPosition(
-    sf::Text& tooltip,
-    float radius,
-    const sf::Vector2f& center)
-{
-        tooltip.setPosition({
-            center.x - tooltip.getGlobalBounds().size.x * 0.5f,
-            center.y + radius + 30.f
-            });
 }

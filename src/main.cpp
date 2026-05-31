@@ -22,7 +22,7 @@
 #include "logic/EditorUpdate.h"
 
 int main()
-{
+{  
     // load font
     sf::Font font;
 
@@ -60,15 +60,7 @@ int main()
 	// get window size for layout calculations
     sf::Vector2u windowSize = window.getSize();
 
-	// calculate center of the window for wheel drawing
-    sf::Vector2f center = {
-        windowSize.x * 0.5f,
-        windowSize.y * 0.5f
-    };
-
-    float radius = std::min(windowSize.x, windowSize.y) * 0.3f; // radius declaration
-
-    // pointer tip is a fixed distance from the center
+    // pointer tip is a fixed distance from the centre
     sf::Vector2f pointerPos = {
         windowSize.x * 0.5f,
         windowSize.y * 0.05f
@@ -114,6 +106,13 @@ int main()
         {"Blue", 1, sf::Color::Blue}
     };
 
+    app.wheel.centre = {
+        windowSize.x * 0.5f,
+        windowSize.y * 0.5f
+    };
+
+    app.wheel.radius = std::min(windowSize.x, windowSize.y) * 0.3f;
+
 	// initial layout calculations
     TableLayout layout =
         getTableLayout(window);
@@ -141,8 +140,8 @@ int main()
     tooltip.setCharacterSize(18);
     tooltip.setFillColor(sf::Color(90, 90, 90));
     tooltip.setPosition({
-            center.x - tooltip.getGlobalBounds().size.x * 0.5f,
-            center.y + radius + 30.f
+            app.wheel.centre.x - tooltip.getGlobalBounds().size.x * 0.5f,
+            app.wheel.centre.y + app.wheel.radius + 30.f
         });
 
 	// decimal formatting for display
@@ -185,8 +184,6 @@ int main()
         for (auto& btn : menuOptions)
             btn.updateHover(mousePos);
 
-        radius = std::min(windowSize.x, windowSize.y) * 0.3f;
-
 		// event handling
         while (auto event = window.pollEvent())
         {
@@ -203,7 +200,6 @@ int main()
                 clickClock,
                 doubleClickThreshold,
                 tooltip,
-                radius,
                 ss);
         }
 
@@ -212,7 +208,6 @@ int main()
             SpinResult spinResult =
                 updateSpin(
                     app,
-                    center,
                     pointerTip,
                     dt
                 );
@@ -234,19 +229,16 @@ int main()
             case AppState::MainView:
             {
                 drawWheel(window,
-                    app.wheel.segments,
-                    radius,
-                    center,
-                    app.spin.rotation,
+                    app,
                     font
                 );
 
-                pointerTip = drawPointer(window, radius, center);
+                pointerTip = drawPointer(window, app.wheel);
 
                 drawWheelName(font,
                     app.wheel,
-                    window,
-                    center);
+                    window
+                );
                 
 				if (!app.spin.spinning)
 				{
