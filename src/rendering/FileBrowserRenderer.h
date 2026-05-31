@@ -1,20 +1,16 @@
 #pragma once
 
 #include "persistence/FileBrowser.h"
+#include "util/Table.h"
 
-void drawFileBrowserUI(
+void drawFileBrowserTitle(
     sf::RenderWindow& window,
     const sf::Font& font,
-    const FileBrowserState& browser)
+    const TableLayout& layout)
 {
-	// title
-    TableLayout layout =
-        getTableLayout(window);
-
     sf::Text title(font);
 
-    title.setString(
-        "Load Wheel");
+    title.setString("Load Wheel");
 
     title.setCharacterSize(30);
 
@@ -27,70 +23,118 @@ void drawFileBrowserUI(
         sf::Color::Black);
 
     window.draw(title);
+}
 
-	// list area dimensions
-    const float startX =
-        layout.startX;
-
-    const float startY =
-        layout.startY;
-
-    constexpr float rowHeight = 40.f;
-
-    constexpr float width = 500.f;
-
-    // rows
-    for (int i = 0;
-        i < browser.entries.size();
+void drawFileBrowserRows(
+    sf::RenderWindow& window,
+    const sf::Font& font,
+    const FileBrowserState& browser,
+    const TableLayout& layout,
+    int startRow,
+    int endRow)
+{
+    for (int i = startRow;
+        i < endRow;
         ++i)
     {
         float y =
-            startY +
-            i * rowHeight;
+            layout.startY +
+            (i - startRow) *
+            layout.rowHeight;
 
-        sf::RectangleShape row({
-            width,
-            rowHeight - 2.f
+        sf::FloatRect rowRect(
+            {
+                layout.startX,
+                y
+            },
+            {
+                layout.tableWidth,
+                layout.rowHeight - 2.f
             });
 
-        row.setPosition({
-            startX,
-            y
-            });
+            drawTableRowBackground(
+                window,
+                rowRect,
+                i == browser.selectedIndex);
 
-        row.setFillColor(
-            i == browser.selectedIndex
-            ?
-            sf::Color(200, 220, 255)
-            :
-            sf::Color::White
-        );
+            sf::Text text(font);
 
-        row.setOutlineThickness(1.f);
+            text.setCharacterSize(18);
 
-        row.setOutlineColor(
-            sf::Color(180, 180, 180));
+            text.setFillColor(
+                sf::Color::Black);
 
-        window.draw(row);
+            text.setString(
+                browser.entries[i]
+                .path()
+                .stem()
+                .string());
 
-        sf::Text text(font);
+            text.setPosition({
+                layout.startX + 8.f,
+                y + 8.f
+                });
 
-        text.setCharacterSize(18);
+            window.draw(text);
+    }
+}
 
-        text.setFillColor(
-            sf::Color::Black);
+void drawFileBrowserUI(
+    sf::RenderWindow& window,
+    const sf::Font& font,
+    const FileBrowserState& browser,
+    TableLayout& layout,
+    Button& loadWheelButton,
+    Button& deleteWheelButton)
+{
+    drawFileBrowserTitle(
+        window,
+        font,
+        layout);
 
-        text.setString(
-            browser.entries[i]
-            .path()
-            .stem()
-            .string());
+    VisibleRange range =
+        calculateVisibleRange(
+            window,
+            layout.startY,
+            layout.rowHeight,
+            static_cast<int>(
+                browser.entries.size()),
+            browser.scrollOffset);
 
-        text.setPosition({
-            startX + 8.f,
-            y + 8.f
-            });
+    float tableHeight =
+        range.maxRows *
+        layout.rowHeight;
 
-        window.draw(text);
+    drawFileBrowserRows(
+        window,
+        font,
+        browser,
+        layout,
+        range.startRow,
+        range.endRow);
+
+    drawScrollbar(
+        window,
+        layout.startX +
+        layout.tableWidth +
+        10.f,
+        layout.startY,
+        range.maxRows *
+        layout.rowHeight,
+        range.maxRows,
+        static_cast<int>(
+            browser.entries.size()),
+        browser.scrollOffset);
+
+    updateButtonPositions(
+        layout,
+        tableHeight,
+        loadWheelButton,
+        deleteWheelButton);
+
+    if (browser.selectedIndex >= 0)
+    {
+        loadWheelButton.draw(window);
+        deleteWheelButton.draw(window);
     }
 }

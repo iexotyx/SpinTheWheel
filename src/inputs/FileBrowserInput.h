@@ -1,34 +1,69 @@
 #pragma once
 
+#include "EventRouter.h"
+#include "util/Table.h"
+
 void handleFileBrowserClick(
     const sf::Vector2f& mousePos,
-    FileBrowserState& browser)
+    const sf::RenderWindow& window,
+    FileBrowserState& browser,
+    const TableLayout& layout)
 {
-    constexpr float startX = 50.f;
-    constexpr float startY = 100.f;
-
-    constexpr float rowHeight = 40.f;
-    constexpr float width = 500.f;
-
     browser.selectedIndex = -1;
 
-    for (int i = 0;
-        i < browser.entries.size();
+    VisibleRange range =
+        calculateVisibleRange(
+            window,
+            layout.startY,
+            layout.rowHeight,
+            static_cast<int>(
+                browser.entries.size()),
+            browser.scrollOffset);
+
+    for (int i = range.startRow;
+        i < range.endRow;
         ++i)
     {
-        sf::FloatRect row(
-            { startX, startY + i * rowHeight },
-            { width, rowHeight }
-        );
+        float y =
+            layout.startY +
+            (i - range.startRow) *
+            layout.rowHeight;
 
-        if (row.contains(mousePos))
-        {
-            browser.selectedIndex = i;
+        sf::FloatRect rowRect(
+            {
+                layout.startX,
+                y
+            },
+            {
+                layout.tableWidth,
+                layout.rowHeight
+            });
 
-            browser.selectedFile =
-                browser.entries[i].path();
-
-            break;
-        }
+            if (rowRect.contains(mousePos))
+            {
+                browser.selectedIndex = i;
+                break;
+            }
     }
+}
+
+inline void handleFileBrowserScroll(
+    float delta,
+    const sf::RenderWindow& window,
+    const TableLayout& layout,
+    FileBrowserState& browser)
+{
+    int visibleRows =
+        static_cast<int>(
+            (window.getSize().y -
+                layout.startY -
+                140.f)
+            / layout.rowHeight);
+
+    handleScrollInput(
+        delta,
+        browser.scrollOffset,
+        static_cast<int>(
+            browser.entries.size()),
+        visibleRows);
 }

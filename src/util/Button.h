@@ -84,4 +84,23 @@ struct Button
         else
             background.setFillColor(sf::Color(50, 50, 50));
     }
+
+    void setPosition(sf::Vector2f position)
+    {
+        sf::Vector2f delta =
+            position -
+            background.getPosition();
+
+        background.move(delta);
+
+        if (type == ButtonType::Text)
+        {
+            text.move(delta);
+        }
+        else if (type == ButtonType::MenuIcon)
+        {
+            for (auto& bar : bars)
+                bar.move(delta);
+        }
+    }
 };

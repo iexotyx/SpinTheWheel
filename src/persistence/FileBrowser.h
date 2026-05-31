@@ -4,6 +4,7 @@
 
 #include "WheelFile.h"
 #include "TreeFile.h"
+#include "util/Button.h"
 
 enum class FileDialogMode
 {
@@ -12,8 +13,6 @@ enum class FileDialogMode
     LoadTree,
     SaveTree
 };
-
-enum class FileDialogMode;
 
 struct FileBrowserState
 {
@@ -81,7 +80,71 @@ bool loadSelectedWheel(
     if (browser.selectedIndex < 0)
         return false;
 
+    if (browser.selectedIndex >=
+        browser.entries.size())
+        return false;
+
     return WheelFile::load(
-        browser.selectedFile,
-        wheel);
+        browser.entries[
+            browser.selectedIndex
+        ].path(),
+                wheel);
+}
+
+inline bool deleteSelectedWheel(
+    FileBrowserState& browser)
+{
+    if (browser.selectedIndex < 0)
+        return false;
+
+    if (browser.selectedIndex >=
+        static_cast<int>(browser.entries.size()))
+        return false;
+
+    try
+    {
+        std::filesystem::remove(
+            browser.entries[
+                browser.selectedIndex
+            ].path());
+
+        refreshFileBrowser(browser);
+
+        browser.selectedIndex = -1;
+
+        return true;
+    }
+    catch (...)
+    {
+        return false;
+    }
+}
+
+inline bool saveEditorWheel(
+    const EditorState& editor,
+    Wheel& wheel,
+    const std::filesystem::path& wheelDirectory)
+{
+    Wheel tempWheel;
+
+    tempWheel.segments =
+        editor.segments;
+
+    tempWheel.name =
+        editor.wheelName.empty()
+        ? "Untitled Wheel"
+        : editor.wheelName;
+
+    std::filesystem::create_directories(
+        wheelDirectory);
+
+    const std::filesystem::path savePath =
+        wheelDirectory /
+        (tempWheel.name + ".csv");
+
+    wheel = tempWheel;
+
+    return WheelFile::save(
+        tempWheel,
+        savePath);
 }

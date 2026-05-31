@@ -158,11 +158,9 @@ TableLayout getTableLayout(const sf::RenderWindow& window)
 // function to calculate colour picker layout based on table layout and current row count
 ColourPickerLayout getColourPickerLayout(
     int rowCount,
-    const TableLayout& cachedLayout
+    const TableLayout& layout
 )
 {
-    TableLayout layout = cachedLayout;
-
     ColourPickerLayout picker;
 
     picker.x = layout.startX;
@@ -174,4 +172,42 @@ ColourPickerLayout getColourPickerLayout(
     picker.height = 20.f;
 
     return picker;
+}
+
+void updateLayouts(
+	const sf::RenderWindow& window,
+	TableLayout& layout,
+	ColourPickerLayout& picker,
+	int rowCount)
+{
+	layout = getTableLayout(window);
+	picker = getColourPickerLayout(rowCount, layout);
+}
+
+void updateButtonPositions(
+    const TableLayout& layout,
+    float tableHeight,
+    Button& loadWheelButton,
+    Button& cancelLoadButton
+)
+{
+    const float buttonGap =
+        layout.rowPadding;
+
+    const float buttonY =
+        layout.startY +
+        tableHeight +
+        buttonGap;
+
+    loadWheelButton.setPosition({
+        layout.startX,
+        buttonY
+        });
+
+    cancelLoadButton.setPosition({
+        layout.startX +
+        loadWheelButton.background.getSize().x +
+        buttonGap,
+        buttonY
+        });
 }

@@ -17,6 +17,7 @@
 #include "rendering/WheelRenderer.h"
 #include "rendering/CreateWheelRenderer.h"
 #include "rendering/MenuRenderer.h"
+#include "persistence/FileBrowser.h"
 #include "inputs/EventRouter.h"
 #include "logic/EditorUpdate.h"
 
@@ -88,6 +89,22 @@ int main()
         sf::Vector2f{ 10.f, 10.f }
     );
 
+    Button loadWheelButton(
+        ButtonType::Text,
+        font,
+        "Load",
+        { 120.f, 40.f },
+        { 40.f, 700.f }
+    );
+
+    Button deleteWheelButton(
+        ButtonType::Text,
+        font,
+        "Delete",
+        { 120.f, 40.f },
+        { 180.f, 700.f }
+    );
+
     // initial wheel
     app.wheel.name = "Basic Wheel";
 
@@ -96,6 +113,16 @@ int main()
         {"Green", 1, sf::Color::Green},
         {"Blue", 1, sf::Color::Blue}
     };
+
+	// initial layout calculations
+    TableLayout layout =
+        getTableLayout(window);
+
+    ColourPickerLayout picker =
+        getColourPickerLayout(
+            static_cast<int>(app.editor.segments.size()),
+            layout
+        );
 
 	// menu option dimensions
     float buttonWidth = 200.f;
@@ -150,15 +177,6 @@ int main()
 
 		float dt = clock.restart().asSeconds();     // calculate delta time
 
-        TableLayout layout =
-            getTableLayout(window);
-
-        ColourPickerLayout picker =
-            getColourPickerLayout(
-                static_cast<int>(app.editor.segments.size()),
-                layout
-            );
-
 		// update hover states for menu button and options
         sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
 
@@ -176,16 +194,17 @@ int main()
                 *event,
                 window,
                 app,
-				menuButton,
-				menuOptions,
+                menuButton,
+                menuOptions,
+                loadWheelButton,
+                deleteWheelButton,
                 layout,
                 picker,
                 clickClock,
                 doubleClickThreshold,
-				tooltip,
+                tooltip,
                 radius,
-                ss
-            );
+                ss);
         }
 
 		if (app.spin.spinning)
@@ -214,9 +233,20 @@ int main()
 
             case AppState::MainView:
             {
-                drawWheel(window, app.wheel.segments, radius, center, app.spin.rotation, font);
+                drawWheel(window,
+                    app.wheel.segments,
+                    radius,
+                    center,
+                    app.spin.rotation,
+                    font
+                );
+
                 pointerTip = drawPointer(window, radius, center);
-                drawWheelName(font, app.wheel, window, center);
+
+                drawWheelName(font,
+                    app.wheel,
+                    window,
+                    center);
                 
 				if (!app.spin.spinning)
 				{
@@ -228,12 +258,12 @@ int main()
 
             case AppState::EditWheel:
             {
-                drawEditWheelUI(
+                updateLayouts(
                     window,
-                    font,
-                    app.editor,
                     layout,
-                    picker);
+					picker,
+                    static_cast<int>(app.editor.segments.size())
+                );
 
                 updateEditWheel(
                     window,
@@ -241,12 +271,33 @@ int main()
                     picker,
                     dt);
 
+                drawEditWheelUI(
+                    window,
+                    font,
+                    app.editor,
+                    layout,
+                    picker);
+
                 break;
             }
 
             case AppState::FileBrowser:
             {
-                drawFileBrowserUI(window, font, app.fileBrowser);
+                updateLayouts(
+                    window,
+                    layout,
+                    picker,
+                    static_cast<int>(app.editor.segments.size())
+                );
+                
+                drawFileBrowserUI(
+                    window,
+                    font,
+                    app.fileBrowser,
+                    layout,
+                    loadWheelButton,
+                    deleteWheelButton);
+
                 break;
             }
 

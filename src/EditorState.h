@@ -91,6 +91,10 @@ struct EditorState
 
         textSelected = false;
 
+        activeField = EditField::None;
+
+        weightInput.clear();
+
     };
 
     // utility function to check if a valid segment row is selected in the editor state for enabling edit/delete actions

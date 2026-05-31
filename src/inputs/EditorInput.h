@@ -15,7 +15,6 @@ void handleEditorMouseClick(
     bool clickedSomething = false;
 
     // title box
-
     float boxWidth =
         layout.tableWidth * 0.6f;
 
@@ -72,7 +71,6 @@ void handleEditorMouseClick(
         < doubleClickThreshold;
 
     // title
-
     if (titleRect.contains(mousePos))
     {
         editor.selectedRow = -1;
@@ -85,7 +83,6 @@ void handleEditorMouseClick(
     }
 
     // rows
-
     for (int i = startRow;
         !clickedSomething && i < endRow;
         ++i)
@@ -111,7 +108,6 @@ void handleEditorMouseClick(
             field = EditField::Weight;
 
         // row padding click
-
         if (field == EditField::None)
         {
             sf::FloatRect rowRect(
@@ -186,7 +182,6 @@ void handleEditorMouseClick(
     }
 
     // keep selection visible
-
     if (editor.hasSelectedRow())
     {
         int visibleRows =
@@ -215,7 +210,6 @@ void handleEditorMouseClick(
     }
 
     // picker
-
     if (editor.showColourPicker)
     {
         const float sliderX =
@@ -278,7 +272,6 @@ void handleEditorMouseClick(
     }
 
     // clear selection
-
     if (!clickedSomething)
     {
         editor.selectedRow = -1;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "TextEditor.h"
+#include "util/Table.h"
 
 // function to rebuild the colour picker gradients based on current hue, saturation and value
 void rebuildColourPickerGradients(

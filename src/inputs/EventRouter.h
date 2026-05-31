@@ -5,6 +5,7 @@
 #include "persistence/FileBrowser.h"
 #include "persistence/AppSettings.h"
 #include "inputs/EditorInput.h"
+#include "inputs/FileBrowserInput.h"
 
 inline bool handleShortcut(
     const sf::Event::KeyPressed& key,
@@ -29,13 +30,19 @@ inline bool handleShortcut(
         {
             if (key.code == sf::Keyboard::Key::S)
             {
-                app.fileBrowser.mode =
-                    FileDialogMode::SaveWheel;
+                if (app.editor.activeField ==
+                    EditField::Weight)
+                {
+                    app.editor.commitWeightEdit();
+                }
 
-                app.fileBrowser.currentDirectory =
-                    app.appSettings.wheelDirectory;
+                normalizeWeights(
+                    app.editor.segments);
 
-                app.state = AppState::FileBrowser;
+                saveEditorWheel(
+                    app.editor,
+                    app.wheel,
+                    app.appSettings.wheelDirectory);
 
                 return true;
             }
@@ -105,6 +112,8 @@ void handleEvent(
     AppContext& app,
     Button& menuButton,
     std::vector<Button>& menuOptions,
+    Button& loadWheelButton,
+    Button& deleteWheelButton,
     const TableLayout& layout,
     const ColourPickerLayout& picker,
     sf::Clock& clickClock,
@@ -118,7 +127,6 @@ void handleEvent(
 
     sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
 
-    // handle mouse clicks for menu interaction
     if (event.is<sf::Event::MouseButtonPressed>())
     {
         auto* mouse = event.getIf<sf::Event::MouseButtonPressed>();
@@ -145,7 +153,17 @@ void handleEvent(
                         break;
 
                     case 1: // Load Wheel
-                        app.state = AppState::FileBrowser;
+                        app.fileBrowser.mode =
+                            FileDialogMode::LoadWheel;
+
+                        app.fileBrowser.currentDirectory =
+                            app.appSettings.wheelDirectory;
+
+                        refreshFileBrowser(
+                            app.fileBrowser);
+
+                        app.state =
+                            AppState::FileBrowser;
                         break;
 
                     case 2: // Create / Edit Wheel
@@ -180,6 +198,38 @@ void handleEvent(
                     doubleClickThreshold
                 );
             }
+            if (app.state == AppState::FileBrowser)
+            {
+                if (app.fileBrowser.selectedIndex >= 0)
+                {
+                    if (loadWheelButton.isHovered(mousePos))
+                    {
+                        if (loadSelectedWheel(
+                            app.fileBrowser,
+                            app.wheel))
+                        {
+                            app.state =
+                                AppState::MainView;
+                        }
+
+                        return;
+                    }
+
+                    if (deleteWheelButton.isHovered(mousePos))
+                    {
+                        deleteSelectedWheel(
+                            app.fileBrowser);
+
+                        return;
+                    }
+                }
+
+                handleFileBrowserClick(
+                    mousePos,
+                    window,
+                    app.fileBrowser,
+                    layout);
+            }
         }
     }
 
@@ -196,6 +246,14 @@ void handleEvent(
                 layout,
                 app.editor
             );
+        }
+        if (app.state == AppState::FileBrowser)
+        {
+            handleFileBrowserScroll(
+                wheel->delta,
+                window,
+                layout,
+                app.fileBrowser);
         }
     }
 
