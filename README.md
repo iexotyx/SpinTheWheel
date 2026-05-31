@@ -1,8 +1,8 @@
 Simple program written to spin a physics-based wheel and randomly select a value*. Select latest release to download the compiled .exe, tested on Windows only.
 
-Please raise an issue with any bugs/improvements you'd like to see fixed/added.
+Please raise an issue at https://github.com/iexotyx/SpinTheWheel/ for fixes/improvements.
 
-*I don't condone using this program to choose a name for a child, make important life decisions, etc...
+*While the randomness of the program has been tested, it is not suggested that this program be used to choose a name for a child, make important life decisions, etc...
 
 Instructions:
 -------------
