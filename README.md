@@ -6,9 +6,9 @@ Please raise an issue at https://github.com/iexotyx/SpinTheWheel/ for fixes/impr
 
 Instructions:
 -------------
-1. (optional) Move the WheelApp.exe file somewhere. The save/load wheel functionality will create a "Wheels" and a "Trees" folder in whichever directory the [.exe] sits in to store saved files. Create a shortcut to the [.exe] if you prefer.
+1. (optional) Move the WheelApp.exe file somewhere. The save/load wheel functionality will create a "Wheels" and a "Trees" folder in whichever directory the [.exe] sits in to store saved files. Create a shortcut to the [.exe] if preferred.
 
-   1.1. I suggest:
+   1.1. For example:
    
            "Wheel Spinner"
              └─ WheelApp.exe
