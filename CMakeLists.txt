@@ -12,7 +12,7 @@ add_executable(WheelApp WIN32
     
     resources.rc   
     
-    "src/elements/Wheel.h" "src/EditorState.h" "src/util/ColourUtils.h"  "src/util/Button.h"     "src/util/Scrollbar.h" "src/inputs/EventRouter.h"    "src/Layouts.h" "src/Shortcuts.h" "src/AppStates.h" "src/Persistence/FileBrowser.h" "src/Persistence/WheelFile.h" "src/Persistence/TreeFile.h" "src/elements/DecisionTree.h" "src/persistence/AppSettings.h" "src/rendering/FileBrowserRenderer.h" "src/rendering/CreateWheelRenderer.h" "src/rendering/WheelRenderer.h" "src/rendering/MenuRenderer.h" "src/TextEditor.h" "src/AppContext.h" "src/inputs/EditorInput.h" "src/inputs/FileBrowserInput.h" "src/inputs/GenericInput.h" "src/logic/EditorUpdate.h" "src/logic/Spin.h" "src/util/Table.h")
+    "src/elements/Wheel.h" "src/EditorState.h" "src/util/ColourUtils.h"  "src/util/Button.h"     "src/util/Scrollbar.h" "src/inputs/EventRouter.h"    "src/Layouts.h" "src/Shortcuts.h" "src/AppStates.h" "src/Persistence/FileBrowser.h" "src/Persistence/WheelFile.h" "src/Persistence/TreeFile.h" "src/elements/DecisionTree.h" "src/persistence/AppSettings.h" "src/rendering/FileBrowserRenderer.h" "src/rendering/EditorRenderer.h" "src/rendering/WheelRenderer.h" "src/rendering/MenuRenderer.h" "src/TextEditor.h" "src/AppContext.h" "src/inputs/EditorInput.h" "src/inputs/FileBrowserInput.h" "src/inputs/GenericInput.h" "src/logic/EditorUpdate.h" "src/logic/Spin.h" "src/util/Table.h")
 
 target_link_libraries(WheelApp PRIVATE
     SFML::Graphics

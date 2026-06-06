@@ -114,6 +114,7 @@ void handleEvent(
     std::vector<Button>& menuOptions,
     Button& loadWheelButton,
     Button& deleteWheelButton,
+    Button& resetSegmentsButton,
     const TableLayout& layout,
     const ColourPickerLayout& picker,
     sf::Clock& clickClock,
@@ -187,6 +188,15 @@ void handleEvent(
             // handle creator table selection
             if (app.state == AppState::EditWheel)
             {
+                if (resetSegmentsButton.isHovered(mousePos))
+                {
+                    resetEditorSegments(
+                        app
+                    );
+
+                    return;
+                }
+
                 handleEditorMouseClick(
                     mousePos,
                     window,

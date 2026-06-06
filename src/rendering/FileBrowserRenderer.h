@@ -126,7 +126,7 @@ void drawFileBrowserUI(
             browser.entries.size()),
         browser.scrollOffset);
 
-    updateButtonPositions(
+    updateFileBrowserButtonPos(
         layout,
         tableHeight,
         loadWheelButton,

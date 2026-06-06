@@ -402,3 +402,18 @@ void updateColourPickerDrag(
         }
     }
 }
+
+void resetEditorSegments(
+    AppContext& app)
+{
+    app.editor.wheelName = "Basic Wheel";
+    app.editor.segments = {
+        {"Red", 1, sf::Color::Red},
+        {"Green", 1, sf::Color::Green},
+        {"Blue", 1, sf::Color::Blue}
+    };
+
+    app.editor.selectedRow = -1;
+    app.editor.activeField = EditField::None;
+    app.editor.showColourPicker = false;
+}

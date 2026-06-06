@@ -184,7 +184,7 @@ void updateLayouts(
 	picker = getColourPickerLayout(rowCount, layout);
 }
 
-void updateButtonPositions(
+void updateFileBrowserButtonPos(
     const TableLayout& layout,
     float tableHeight,
     Button& loadWheelButton,
@@ -208,6 +208,24 @@ void updateButtonPositions(
         layout.startX +
         loadWheelButton.background.getSize().x +
         buttonGap,
+        buttonY
+        });
+}
+
+void updateEditorButtonPos(
+    const TableLayout& layout,
+    float tableHeight,
+	Button& resetSegmentsButton
+)
+{
+    const float buttonY =
+        layout.startY +
+        tableHeight +
+        40.f + // button height
+		4.f; // gap between table and button
+
+    resetSegmentsButton.setPosition({
+        layout.startX,
         buttonY
         });
 }

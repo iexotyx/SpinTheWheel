@@ -465,12 +465,20 @@ void drawColourPicker(
     window.draw(preview);
 }
 
+void drawResetSegmentsButton(
+    sf::RenderWindow& window,
+    const Button& clearSegmentsButton)
+{
+    clearSegmentsButton.draw(window);
+}
+
 // draw create/edit wheel UI function
 void drawEditWheelUI(sf::RenderWindow& window,
     const sf::Font& font,
     const EditorState& editor,
     TableLayout& layout,
-    const ColourPickerLayout& picker)
+    const ColourPickerLayout& picker,
+    Button& resetSegmentsButton)
 {
     // editor title
     sf::Text title(font);
@@ -529,6 +537,17 @@ void drawEditWheelUI(sf::RenderWindow& window,
         maxRows,
         totalRows,
         editor.scrollOffset
+    );
+
+    updateEditorButtonPos(
+        layout,
+        tableHeight,
+        resetSegmentsButton
+    );
+
+    drawResetSegmentsButton(
+        window,
+        resetSegmentsButton
     );
 
     if (editor.showColourPicker &&

@@ -15,7 +15,7 @@
 #include "logic/Spin.h"
 #include "rendering/FileBrowserRenderer.h"
 #include "rendering/WheelRenderer.h"
-#include "rendering/CreateWheelRenderer.h"
+#include "rendering/EditorRenderer.h"
 #include "rendering/MenuRenderer.h"
 #include "persistence/FileBrowser.h"
 #include "inputs/EventRouter.h"
@@ -93,6 +93,14 @@ int main()
         ButtonType::Text,
         font,
         "Delete",
+        { 120.f, 40.f },
+        { 180.f, 700.f }
+    );
+
+    Button resetSegmentsButton(
+        ButtonType::Text,
+        font,
+        "Reset",
         { 120.f, 40.f },
         { 180.f, 700.f }
     );
@@ -195,6 +203,7 @@ int main()
                 menuOptions,
                 loadWheelButton,
                 deleteWheelButton,
+                resetSegmentsButton,
                 layout,
                 picker,
                 clickClock,
@@ -268,7 +277,8 @@ int main()
                     font,
                     app.editor,
                     layout,
-                    picker);
+                    picker,
+                    resetSegmentsButton);
 
                 break;
             }
